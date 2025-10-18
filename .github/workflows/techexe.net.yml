@@ -1,28 +1,36 @@
-name: techexe.net
+name: TECHEXE Kubernetes Connection
 
 on:
+  workflow_dispatch: # allows manual trigger
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build:
+  test-k8s-connection:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v2-beta
-      with:
-          node-version: 12
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
 
-    - name: Build React App
-      run: |
-        npm install # Install Dependencies
-        CI=false npm run build # CI=false to ignore warnings
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.TECHEXE_NET }}" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl config view
 
-    - name: Install Surge
-      run: npm install -g surge
+      - name: Test connection to Kubernetes cluster
+        run: |
+          echo "🔍 Checking cluster access..."
+          kubectl cluster-info
+          echo "✅ Listing namespaces..."
+          kubectl get ns
 
-    - name: Deploy to Surge
-      run:  surge ./build https://techexe1.surge.sh/ --token ${{secrets.TECHEXE_NET}}
+
