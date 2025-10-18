@@ -32,5 +32,3 @@ jobs:
           kubectl cluster-info
           echo "✅ Listing namespaces..."
           kubectl get ns
-
-
